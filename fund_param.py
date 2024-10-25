@@ -1,4 +1,5 @@
 import numpy as np
+from fontTools.misc.psOperators import PSOperators
 
 
 def x_intensity(lambda_x):
@@ -170,26 +171,28 @@ def Absorption_jump_factor(metal_i):
     return pk
 def mass_absorption_coefficient(E):
     """
+    金:79au 银:47ag 铜:29cu 锌:30zn 镍:28ni 铟:49in 钴:27co 钯:46pd 砷:33as 铂:78pt
     :param E:波长对应的能量值
     :return: 对应波长各元素的质量吸收系数
     c,l1,l2,l3,n_1,n_2,n,kn_3:计算吸收系数的系数
     l_1,l_2,l_3,ka:是各元素的吸收边能量值
     """
-    l1 = [14.3528, 3.8058, 1.0961]
-    l2 = [13.7336, 3.5237, 0.951]
-    l3 = [11.9187, 3.3511, 0.921]
-    l_1 =[11.61,3.233,1.022]
-    l_2=[11.443,3.15,0.947]
-    l_3=[9.743,2.983,0.928]
-    ka = [80.725, 25.514, 8.979]
-    c = [19.4943, 17.2453, 14.2775]
-    k = [80.7249, 25.514, 8.9789]
+    l1 = [14.3528, 3.8058, 1.0961,1.1936,1.0081,4.2375,0.9256,3.6043,1.5265,13.8799]
+    l2 = [13.7336, 3.5237, 0.951,1.0428,0.8719,3.9380,0.8956,3.3303,1.3586,13.2726]
+    l3 = [11.9187, 3.3511, 0.921,1.0197,0.8319,3.7301,00.8656,3.1733,1.3231,11.5637]
+    l_1 =[14.353,3.806,1.097,1.196,1.009,4.238,0.925,3.604,1.527,13.88]
+    l_2=[13.734,3.524,0.952,1.045,0.87,3.938,0.793,3.33,1.359,13.273]
+    l_3=[11.919,3.351,0.933,1.022,0.853,3.73,0.778,3.173,1.324,11.564]
+    ka = [80.725, 25.514, 8.979,9.659,8.333,27.94,7.709,24.35,11.867,78.395]
+    c = [19.4943, 17.2453, 14.2775,14.4732,14.0657,17.5165,13.8555,17.1037,15.0268,19.4643]
+    k = [80.7249, 25.514, 8.9789,9.6586,8.3328,27.9399,7.7089,24.3503,11.8667,78.3948]
     # 金的2.85存疑
-    n = [2.85, 2.85, 2.85]
-    n_1 = [2.65, 2.714, 2.73]
-    n_2 = [2.61439, 2.61439, 2.61439]
-    # 铜的为瞎编的,原表中是从zn开始不是cu
-    n_3 = [2.3554, 2.3554, 2.3554]
+    n = [2.85, 2.85, 2.85,2.85,2.85,2.85,2.85,2.85,2.85,2.85]
+    n_1 = [2.65, 2.714, 2.73,2.73,2.73,2.68,2.73,2.722,2.73,2.65]
+    #28以上为瞎编的，原表从ni开始的
+    n_2 = [2.61439, 2.61439, 2.61439, 2.61439, 2.61439, 2.61439, 2.61439, 2.61439, 2.61439,2.61439]
+    # 30以上的为瞎编的,原表中是从zn开始不是cu
+    n_3 = [2.3554, 2.3554, 2.3554,2.3554,2.3554,2.3554,2.3554,2.3554,2.3554,2.3554]
     U = []
     for i in range(len(l1)):
         u_value = []
@@ -204,6 +207,8 @@ def mass_absorption_coefficient(E):
                 u = c[i] * l3[i] * (12.3981 / item) ** n_3[i]
             elif i==0 and l3[i]>= item>2.206:
                 u=c[i]*3.4249*(12.3981/item)**2.575
+            elif i==9 and l3[i]>=item>2.122:
+                u=c[i]*3.296*(12.3981/item)**2.575
             else:
                 u = None
                 print(f"{item}不在计算范围内),{i}")
@@ -221,7 +226,10 @@ def sample_mass_coefficient(C_i,lambda_u,a1):
     u_s_lambda=[]
     for i in range(len(lambda_u[0])):
         u_s = (C_i[0]*lambda_u[0][i]/np.sin(a1/180*np.pi)+C_i[1]*lambda_u[1][i]/np.sin(a1/180*np.pi)+
-               C_i[2]*lambda_u[2][i]/np.sin(a1/180*np.pi))
+               C_i[2]*lambda_u[2][i]/np.sin(a1/180*np.pi)+C_i[3]*lambda_u[3][i]/np.sin(a1/180*np.pi)+
+               C_i[4]*lambda_u[4][i]/np.sin(a1/180*np.pi)+C_i[5]*lambda_u[5][i]/np.sin(a1/180*np.pi)+
+               C_i[6]*lambda_u[6][i]/np.sin(a1/180*np.pi)+C_i[7]*lambda_u[7][i]/np.sin(a1/180*np.pi)+
+               C_i[8]*lambda_u[8][i]/np.sin(a1/180*np.pi)+C_i[9]*lambda_u[9][i]/np.sin(a1/180*np.pi))
         u_s_lambda.append(u_s)
     return u_s_lambda
 def sample_lambda_i_mass_coefficient(C_i,lambda_u,a2):
@@ -233,16 +241,37 @@ def sample_lambda_i_mass_coefficient(C_i,lambda_u,a2):
     :return: 试样s在出射角为a2时不同临界波长下的有效质量吸收系数
     """
     u_s_lambda=[]
-    u_s1=0
-    u_s2=0
-    u_s3=0
+    u_s1 = 0
+    u_s2 = 0
+    u_s3 = 0
+    u_s4 = 0
+    u_s5 = 0
+    u_s6 = 0
+    u_s7 = 0
+    u_s8 = 0
+    u_s9 = 0
+    u_s10 = 0
     for i in range(len(lambda_u)):
-        u_s1 += C_i[i] * lambda_u[i][0] / np.sin(a2/180*np.pi)
-        u_s2 += C_i[i] * lambda_u[i][1] / np.sin(a2/180*np.pi)
-        u_s3 += C_i[i] * lambda_u[i][2] / np.sin(a2/180*np.pi)
+        u_s1 += C_i[i] * lambda_u[i][0] / np.sin(a2 / 180 * np.pi)
+        u_s2 += C_i[i] * lambda_u[i][1] / np.sin(a2 / 180 * np.pi)
+        u_s3 += C_i[i] * lambda_u[i][2] / np.sin(a2 / 180 * np.pi)
+        u_s4 += C_i[i] * lambda_u[i][3] / np.sin(a2 / 180 * np.pi)
+        u_s5 += C_i[i] * lambda_u[i][4] / np.sin(a2 / 180 * np.pi)
+        u_s6 += C_i[i] * lambda_u[i][5] / np.sin(a2 / 180 * np.pi)
+        u_s7 += C_i[i] * lambda_u[i][6] / np.sin(a2 / 180 * np.pi)
+        u_s8 += C_i[i] * lambda_u[i][7] / np.sin(a2 / 180 * np.pi)
+        u_s9 += C_i[i] * lambda_u[i][8] / np.sin(a2 / 180 * np.pi)
+        u_s10 += C_i[i] * lambda_u[i][9] / np.sin(a2 /180 * np.pi)
     u_s_lambda.append(u_s1)
     u_s_lambda.append(u_s2)
     u_s_lambda.append(u_s3)
+    u_s_lambda.append(u_s4)
+    u_s_lambda.append(u_s5)
+    u_s_lambda.append(u_s6)
+    u_s_lambda.append(u_s7)
+    u_s_lambda.append(u_s8)
+    u_s_lambda.append(u_s9)
+    u_s_lambda.append(u_s10)
     return u_s_lambda
 def obtain_gi(I_intensity,wk,fka,Jk,result):
 
@@ -262,7 +291,7 @@ def obtain_gi(I_intensity,wk,fka,Jk,result):
     return gi
 # c_i 归一化浓度,a1是入射角,a2是出射角,w是立体角,wk是荧光产额,fka是谱线相对强度,jk是吸收跃变因子,lambda_u是各元素在波长λ的吸收系数
 # lambda_i_u 是各元素在波长为λ_i的吸收系数，u_s_j是试样s在波长λj处的吸收系数,
-def Relative_intensity(c_i,a1,wk,fka,Jk,lambda_u,u,u_s_j,u_s_i):
+def Relative_intensity(c_i,a1,wk,fka,Jk,lambda_u,u,u_s_j,u_s_i,I_i):
     """
 
     :param c_i: 各元素浓度
@@ -281,15 +310,28 @@ def Relative_intensity(c_i,a1,wk,fka,Jk,lambda_u,u,u_s_j,u_s_i):
     # beta_ij包含了三中元素其临界波长吸收限内下不同波长时的beta_ij,分别为4*3*3,2*3*3,7*3*3
     lambda_i_u_scaled = [[x / np.sin(a1/180*np.pi) for x in y] for y in u]
     lambda_u_scaled = [[[x / np.sin(a2 / 180 * np.pi) for x in y] for y in z] for z in lambda_u]
-
     result_1 = np.zeros((len(lambda_u[0][0]),len(u)))
     result_2 = np.zeros((len(lambda_u[1][0]), len(u)))
     result_3 = np.zeros((len(lambda_u[2][0]), len(u)))
-    result=[result_1,result_2,result_3]
+    result_4 = np.zeros((len(lambda_u[3][0]), len(u)))
+    result_5 = np.zeros((len(lambda_u[4][0]), len(u)))
+    result_6 = np.zeros((len(lambda_u[5][0]), len(u)))
+    result_7 = np.zeros((len(lambda_u[6][0]), len(u)))
+    result_8 = np.zeros((len(lambda_u[7][0]), len(u)))
+    result_9 = np.zeros((len(lambda_u[8][0]), len(u)))
+    result_10 = np.zeros((len(lambda_u[9][0]), len(u)))
+    result=[result_1,result_2,result_3,result_4,result_5,result_6,result_7,result_8,result_9,result_10]
     beta_1 = np.zeros((len(lambda_u[0][0]),len(u)))
     beta_2 = np.zeros((len(lambda_u[1][0]), len(u)))
     beta_3 = np.zeros((len(lambda_u[2][0]), len(u)))
-    beta_ij = [beta_1,beta_2,beta_3]
+    beta_4 = np.zeros((len(lambda_u[3][0]), len(u)))
+    beta_5 = np.zeros((len(lambda_u[4][0]), len(u)))
+    beta_6 = np.zeros((len(lambda_u[5][0]), len(u)))
+    beta_7 = np.zeros((len(lambda_u[6][0]), len(u)))
+    beta_8 = np.zeros((len(lambda_u[7][0]), len(u)))
+    beta_9 = np.zeros((len(lambda_u[8][0]), len(u)))
+    beta_10 = np.zeros((len(lambda_u[9][0]), len(u)))
+    beta_ij = [beta_1,beta_2,beta_3,beta_4,beta_5,beta_6,beta_7,beta_8,beta_9,beta_10]
     for i in range(len(lambda_u_scaled)):
         for j in range(len(lambda_u_scaled[i][0])):
             for w in range(len(lambda_i_u_scaled)):
@@ -300,19 +342,67 @@ def Relative_intensity(c_i,a1,wk,fka,Jk,lambda_u,u,u_s_j,u_s_i):
         for j in range(len(result[i])):
             for w in range(len(result[i][j])):
                 beta_ij[i][j][w] = result[i][j][w] / result[i][j][i] - 1
-    gi=obtain_gi(I_intensity=[8286, 8426, 25597],wk=wk,fka=fka,Jk=jk,result=result)
+    gi=obtain_gi(I_intensity=I_i,wk=wk,fka=fka,Jk=jk,result=result)
     deerta = np.zeros((len(lambda_u), len(lambda_u)))
-    deerta[0, 1] = 1
-    deerta[2, 0] = 1
-    deerta[2, 1] = 1
+    deerta[0,1] = 1
+    deerta[0,5] = 1
+    deerta[0,7] = 1
+    deerta[0,8] = 1
+    deerta[1,5] = 1
+    deerta[2,0] = 1
+    deerta[2,1] = 1
+    deerta[2,3] = 1
+    deerta[2, 5] = 1
+    deerta[2, 7] = 1
+    deerta[2, 8] = 1
+    deerta[2,9] = 1
+    deerta[3, 0] = 1
+    deerta[3, 1] = 1
+    deerta[3, 5] = 1
+    deerta[3, 7] = 1
+    deerta[3, 8] = 1
+    deerta[3,9] = 1
+    deerta[4, 0] = 1
+    deerta[4, 1] = 1
+    deerta[4, 2] = 1
+    deerta[4, 3] = 1
+    deerta[4, 5] = 1
+    deerta[4, 7] = 1
+    deerta[4, 8] = 1
+    deerta[4, 9] = 1
+    deerta[6, 0] = 1
+    deerta[6, 1] = 1
+    deerta[6, 2] = 1
+    deerta[6, 3] = 1
+    deerta[6, 4] = 1
+    deerta[6, 5] = 1
+    deerta[6, 7] = 1
+    deerta[6, 8] = 1
+    deerta[6, 9] = 1
+    deerta[7, 1] = 1
+    deerta[7, 5] = 1
+    deerta[8, 1] = 1
+    deerta[8, 5] = 1
+    deerta[8, 7] = 1
+    deerta[9, 0] = 1
+    deerta[9, 1] = 1
+    deerta[9, 5] = 1
+    deerta[9, 7] = 1
+    deerta[9, 8] = 1
     deerta_lambda=0.002
     total_intensity_i=[]
     relative_intensity_i=[]
-
     lij_1 = np.zeros((len(u), len(lambda_u[0][0])))
     lij_2 = np.zeros((len(u), len(lambda_u[1][0])))
     lij_3 = np.zeros((len(u), len(lambda_u[2][0])))
-    l_i_j=[lij_1,lij_2,lij_3]
+    lij_4 = np.zeros((len(u), len(lambda_u[3][0])))
+    lij_5 = np.zeros((len(u), len(lambda_u[4][0])))
+    lij_6 = np.zeros((len(u), len(lambda_u[5][0])))
+    lij_7 = np.zeros((len(u), len(lambda_u[6][0])))
+    lij_8 = np.zeros((len(u), len(lambda_u[7][0])))
+    lij_9 = np.zeros((len(u), len(lambda_u[8][0])))
+    lij_10 = np.zeros((len(u), len(lambda_u[9][0])))
+    l_i_j=[lij_1,lij_2,lij_3,lij_4,lij_5,lij_6,lij_7,lij_8,lij_9,lij_10]
 
     for i in range(len(lambda_min_max)):
         for j in range(len(lambda_min_max[i])):
@@ -373,7 +463,7 @@ def Relative_intensity(c_i,a1,wk,fka,Jk,lambda_u,u,u_s_j,u_s_i):
         relative_intensity_i.append(relative_intensity)
     return relative_intensity_i
 
-def main_fund_param(r_i):
+def main_fund_param(r_i,I_i):
     """
 
     :param r_i:是样品测试情况下的相对强度
@@ -381,10 +471,9 @@ def main_fund_param(r_i):
     """
 
     r_i=[x for x in r_i]
-    I_i = [8286, 8426, 25597]
     R_i = [i / I for i, I in zip(r_i, I_i)]
     C_i=[element / sum(R_i) for element in R_i]
-    print(R_i)
+    # print(R_i)
     # u_s = [sample_mass_coefficient(C_i, x, a1) for x in lambda_u]
     # u特征x射线的质量系数,每个列表代表一个元素在不同荧光X射线波长下的质量系数
     # u_s_i是不同荧光射线波长下,试样的质量系数.已除过出射角
@@ -393,12 +482,12 @@ def main_fund_param(r_i):
     u_s_j = [x * np.sin(a1 / 180 * np.pi) for x in u_s_i]
     relative_intensity_cal = Relative_intensity(c_i=C_i, a1=a1,  wk=wk, fka=fka, Jk=jk,
                                                 lambda_u=lambda_u, u=u, u_s_i=u_s_i,
-                                                u_s_j=u_s_j)
+                                                u_s_j=u_s_j,I_i=I_i)
 
     C_i_2 = [0 for _ in range(len(r_i))]
     # C_i_1 = [x*y*(1-z)/(x*(y-z)+z*(1-y)) for x,y,z in zip(R_i,C_i,relative_intensity_cal)]
-    C_i_1 = [x/y*z for x,y,z in zip(R_i,relative_intensity_cal,C_i)]
-
+    # C_i_1 = [x/y*z for x,y,z in zip(R_i,relative_intensity_cal,C_i)]
+    C_i_1 = [x / y * z if y != 0 else [0] for x, y, z in zip(R_i, relative_intensity_cal, C_i)]
     C_i_1 = [item[0] for item in C_i_1]
     print(C_i_1)
     C_i_1 = [item/sum(C_i_1) for item in C_i_1]
@@ -411,14 +500,16 @@ def main_fund_param(r_i):
         u_s_j_1 = [x * np.sin(a1 / 180 * np.pi) for x in u_s_i_1]
         relative_intensity_cal_1 = Relative_intensity(c_i=C_i_1, a1=a1, wk=wk, fka=fka, Jk=jk,
                                                     lambda_u=lambda_u, u=u, u_s_i=u_s_i_1,
-                                                    u_s_j=u_s_j_1)
+                                                    u_s_j=u_s_j_1,I_i=I_i)
         # print(relative_intensity_cal_1)
-        j=0
         #在第一次while循环使用C_i下面的for循环使用C_i和relative_intensity_cal1,其他时候为C_i_1
         for i in range(len(r_i)):
             # print(R_i)
-            C_i_2[i]=R_i[i]/relative_intensity_cal_1[i]*C_i_1[i]
-            print(C_i_2)
+            if relative_intensity_cal_1[i]==0:
+                C_i_2[i]=0
+            else:
+                C_i_2[i]=R_i[i]/relative_intensity_cal_1[i]*C_i_1[i]
+        # print(C_i_2)
             # print(C_i_1)
             # if abs(C_i_2[i] - C_i_1[i]) < 5 * 10 ** -5:
             #     j += 1
@@ -428,9 +519,15 @@ def main_fund_param(r_i):
         # print(relative_intensity_cal_1)
         # print(C_i_1)
         # print(C_i_2)
-        C_i_2 = [element[0] / sum(C_i_2) for element in C_i_2]
+        C_i_2 = [element / sum(C_i_2) for element in C_i_2]
         C_i_2 = [x[0] for x in C_i_2]
-        if (all(abs(a-b))< 5*10**-5 for a,b in zip(C_i_2,C_i_1)):
+        print(C_i_2)
+        # print(all(abs(a-b)< 5*10**-5) for a,b in zip(C_i_2,C_i_1))
+        j = 0
+        for i in range(len(C_i_2)):
+            if abs(C_i_2[i]-C_i_1[i])<5*10**-5:
+                j+=1
+        if j==len(C_i_2):
             Exman =True
         # print(C_i_2)
         C_i_1 = [x for x in C_i_2]
@@ -440,57 +537,23 @@ def main_fund_param(r_i):
     return C_i_2
 a1=45
 a2=45
-# 假设我们有一组浓度数据
-#样本4
-# i_i = [8498,15,501]
-# 减去500
-# i_i = [8498,15,1]
-#样本5
-# i_i =[8334,26,613]
-# i_i = [8334,26,113]
-#样本6
-# i_i=[8459,54,668]
-# i_i=[8459,54,168]
-# 样本7
-# i_i=[8420,78,840]
-# i_i=[8420,78,340]
-# 样本8
-# i_i=[8032,209,1079]
-# i_i=[8032,209,579]
-# 样本9
-# i_i=[7699,123,1325]
-# i_i=[7699,123,825]
-# 样本10
-# i_i=[6854,325,1504]
-# i_i=[6854,325,1004]
-# 样本11
-# i_i=[6743,578,1936]
-# i_i=[6743,578,1436]
-# 样本12
-# i_i=[6086,452,2404]
-# i_i=[6086,452,1904]
-# 样本13
-# i_i=[5412,837,3078]
-# i_i=[5412,837,2578]
-# 样本14
-i_i = [5092,503,4899]
-# i_i = [5092,503,4399]
-# 样本15
-# i_i = [4191, 1778, 3943]
-# i_i=[4191,1778,3443]
-# 样本16
-# i_i = [3201, 1415, 6930]
-# i_i = [3201, 1415, 6430]
-I_i = [8286,8426,25597]
-metal_i=[79,47,29]
+
+i_i=[-5.003646523552197e-12, 9.35473920549157e-13, 25597.0000000001 ,1.6821266601851903e-12, 1.2652292408210641e-13 ,3.3115600105854126e-17, 9.210514295698857e-15, 3.0088236589731476e-15, 1.3849338342808437e-13, 4.959227473122496e-14
+]
+
+I_i = [8286,8426,25597,24242,26522,4887,10619,6167,26612,7147]
+
+# 金:79au 银:47ag 铜:29cu 锌:30zn 镍:28ni 铟:49in 钴:27co 钯:46pd 砷:33as
+metal_i=[79,47,29,30,28,49,27,46,33,78]
 # 元素i的特征X射线的波长, 该值只与元素的原子序数有关.
-E_i=[9.743,22.163,8.046]
+E_i=[9.743,22.163,8.046,8.637,7.48,24.21,6.931,21.177,10.543,9.442]
 lambda_i = [1.23981 / x for x in E_i]
 # 不同元素特征波长下au,ag,cu的质量吸收系数
 u=mass_absorption_coefficient(E_i)
 # 荧光产额，该参数可能存在较大误差,金要用l系的荧光产额k:0.965,l:0.331
-wk=[0.331,0.83,0.41]
-Critical_excitation_energy=[11.919,25.514,8.979]
+
+wk=[0.331,0.83,0.41,0.435,0.375,0.85,0.345,0.82,0.53,0.318]
+Critical_excitation_energy=[11.919,25.514,8.979,9.659,8.333,27.94,6.931,24.35,11.867,11.564]
 Critical_excitation_wavelength=[1.23981/x for x in Critical_excitation_energy]
 # v 是光管的激发电压,单位为kv
 V=40
@@ -504,7 +567,5 @@ lambda_u=[mass_absorption_coefficient(x) for x in E_min_max]
 # u_s是在不同元素的临界波长范围内时,其不同波长的试样s的质量系数，已除过入射角
 fka=Spectral_line_score(metal_i)
 jk=Absorption_jump_factor(metal_i)
-Y=main_fund_param(i_i,)
+Y=main_fund_param(i_i,I_i)
 print(Y)
-
-
